@@ -515,7 +515,7 @@ public class CoreWorkload extends Workload {
   }
 
   protected String buildKeyName(long keynum) {
-    if (!orderedinserts) {
+    /*if (!orderedinserts) {
       keynum = Utils.hash(keynum);
     }
     String value = Long.toString(keynum);
@@ -524,7 +524,11 @@ public class CoreWorkload extends Workload {
     for (int i = 0; i < fill; i++) {
       prekey += '0';
     }
-    return prekey + value;
+    return prekey + value;*/
+    //Building custom rowkey based on Acoustic data
+    long longNumber = (long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L; //can't do Int at 10 digit
+    //System.out.println(uuid1+"#"+fixedStr+"#"+random4digit+"#"+random10digit.toString()+"#"+uuid2);
+    return UUID.randomUUID().toString().replace("-", "").toUpperCase()+"#"+"dddddfffffhhhhh"+"#"+String.format("%04d", new Random().nextInt(10000))+"#"+Long.toString(longNumber)+"#"+UUID.randomUUID().toString().replace("-", "").toUpperCase();
   }
 
   /**
@@ -552,16 +556,28 @@ public class CoreWorkload extends Workload {
   private HashMap<String, ByteIterator> buildValues(String key) {
     HashMap<String, ByteIterator> values = new HashMap<>();
 
+    int j=0;
     for (String fieldkey : fieldnames) {
-      ByteIterator data;
-      if (dataintegrity) {
-        data = new StringByteIterator(buildDeterministicValue(key, fieldkey));
-      } else {
+      if (j == 1)
+       {
+        ByteIterator data;
+    	if (dataintegrity) {
+           data = new StringByteIterator(buildDeterministicValue(key, fieldkey));
+        } else {
         // fill with random data
-        data = new RandomByteIterator(fieldlengthgenerator.nextValue().longValue());
+         data = new RandomByteIterator(fieldlengthgenerator.nextValue().longValue());
+        } 
+        values.put(fieldkey, data);
+       }
+      else if (j == 3)
+      {
+        values.put(fieldkey, new StringByteIterator(UUID.randomUUID().toString().replace("-", "").toUpperCase()));
       }
-      values.put(fieldkey, data);
+      else
+        values.put(fieldkey, new StringByteIterator(""));
+      j++;
     }
+
     return values;
   }
 
